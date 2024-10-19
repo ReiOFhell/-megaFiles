@@ -7,6 +7,7 @@ Fast and Easy Download!
 Want to access Ômega? It’s simple! Download the Ômega files directly from MediaFire. Just click the link, and you’ll be one step closer to enjoying all the features we’ve prepared for you!
 
 https://www.mediafire.com/file/m9q6gncdtg0hvrh/%C3%B4mega.apk/file
+## 
 
 
 ## Ômega

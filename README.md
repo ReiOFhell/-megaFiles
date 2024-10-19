@@ -1,4 +1,4 @@
-# gomega
+# Ômega
 
 Se deu errado começe do zero!
 

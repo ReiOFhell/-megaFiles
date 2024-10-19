@@ -10,6 +10,10 @@ https://www.mediafire.com/file/m9q6gncdtg0hvrh/%C3%B4mega.apk/file
 ## 
 
 
+
+
+
+
 ## Ômega
 
 Se as coisas não saíram como planejado, não se preocupe! Às vezes, a melhor solução é começar do zero.

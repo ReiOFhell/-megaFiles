@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "341368657902",
+    "project_id": "gomega-b3ddf",
+    "storage_bucket": "gomega-b3ddf.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:341368657902:android:84ac4160cca0000ec8e0ff",
+        "android_client_info": {
+          "package_name": "com.demonbackup.gomega.gomega"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "341368657902-416h39uuv5irv1d5qq3cum458qh23spf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.demonbackup.gomega.gomega",
+            "certificate_hash": "355354258a32b5f77280fa3c4329a4bb6e595cb7"
+          }
+        },
+        {
+          "client_id": "341368657902-eji13ut14u2j9mnjb0gk60o1e6t3v2h8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCV3iix1aX6Fztwc-poAj8rEpe5U983UDQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "341368657902-eji13ut14u2j9mnjb0gk60o1e6t3v2h8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

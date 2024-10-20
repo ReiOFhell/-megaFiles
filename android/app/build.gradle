@@ -1,14 +1,14 @@
 plugins {
     id "com.android.application"
     id "kotlin-android"
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services" // Adicionei a linha do plugin Google Services aqui
 }
 
 android {
     namespace = "com.demonbackup.gomega.gomega"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 34 // Atualize para a versão mais recente, se necessário
+    ndkVersion = "23.1.7779620" // Especifique a versão correta do NDK, se necessário
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -20,25 +20,26 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.demonbackup.gomega.gomega"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        minSdkVersion 23
+        targetSdkVersion 34 // Defina a versão de destino como desejado
+        versionCode 1 // Altere conforme necessário
+        versionName "1.0" // Altere conforme necessário
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            // Você deve criar uma configuração de assinatura personalizada aqui
+            signingConfig = signingConfigs.debug // Mude para sua configuração de release
         }
     }
 }
 
-flutter {
-    source = "../.."
+dependencies {
+    // Adicione esta linha se ainda não estiver presente
+    implementation platform('com.google.firebase:firebase-bom:32.2.1') // Atualize para a versão mais recente se necessário
+    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-auth' // Adicione se você estiver usando autenticação
+    implementation 'com.google.firebase:firebase-database' // Adicione se você estiver usando o Firestore
+    // Adicione outras dependências do Firebase que você precisa aqui
 }

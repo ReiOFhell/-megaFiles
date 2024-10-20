@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class PasswordManagerScreen extends StatefulWidget {
   @override
@@ -8,8 +8,11 @@ class PasswordManagerScreen extends StatefulWidget {
 }
 
 class _PasswordManagerScreenState extends State<PasswordManagerScreen> {
-  List<Map<String, String>> _passwords = [];
-  final TextEditingController _siteController = TextEditingController();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  User? _currentUser;
+  List<Map<String, dynamic>> _passwords = [];
+  final TextEditingController _loginController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
 
@@ -18,44 +21,95 @@ class _PasswordManagerScreenState extends State<PasswordManagerScreen> {
   @override
   void initState() {
     super.initState();
-    _loadPasswords();
+    _checkUser();
+  }
+
+  void _checkUser() {
+    _auth.authStateChanges().listen((User? user) {
+      if (user != null) {
+        setState(() {
+          _currentUser = user;
+        });
+        _loadPasswords();
+      }
+    });
   }
 
   Future<void> _loadPasswords() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? passwordsString = prefs.getString('passwords');
+    if (_currentUser == null) return;
 
-    if (passwordsString != null) {
-      List<dynamic> passwordsList = json.decode(passwordsString);
-      setState(() {
-        _passwords = passwordsList.map((password) => Map<String, String>.from(password)).toList();
-      });
-    }
+    final snapshot = await _firestore
+        .collection('passwords')
+        .doc(_currentUser!.uid)
+        .collection('userPasswords')
+        .get();
+
+    setState(() {
+      _passwords = snapshot.docs
+          .map((doc) => {
+        'id': doc.id,
+        ...doc.data() as Map<String, dynamic>
+      })
+          .toList();
+    });
   }
 
-  Future<void> _savePasswords() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('passwords', json.encode(_passwords));
+  Future<void> _savePassword(Map<String, dynamic> passwordData) async {
+    if (_currentUser == null) return;
+
+    await _firestore
+        .collection('passwords')
+        .doc(_currentUser!.uid)
+        .collection('userPasswords')
+        .add(passwordData);
+
+    _loadPasswords();
+  }
+
+  Future<void> _removePassword(String id) async {
+    if (_currentUser == null) return;
+
+    await _firestore
+        .collection('passwords')
+        .doc(_currentUser!.uid)
+        .collection('userPasswords')
+        .doc(id)
+        .delete();
+
+    _loadPasswords();
+  }
+
+  Future<void> _editPassword(String id, Map<String, dynamic> updatedData) async {
+    if (_currentUser == null) return;
+
+    await _firestore
+        .collection('passwords')
+        .doc(_currentUser!.uid)
+        .collection('userPasswords')
+        .doc(id)
+        .update(updatedData);
+
+    _loadPasswords();
   }
 
   void _addPassword() {
-    if (_siteController.text.isNotEmpty && _passwordController.text.isNotEmpty) {
-      setState(() {
-        _passwords.add({
-          'site': _siteController.text,
-          'password': _passwordController.text,
-          'note': _noteController.text,
-          'date': DateTime.now().toString(),
-        });
-      });
-      _siteController.clear();
+    if (_loginController.text.isNotEmpty &&
+        _passwordController.text.isNotEmpty &&
+        _noteController.text.isNotEmpty) {
+      final passwordData = {
+        'login': _loginController.text,
+        'password': _passwordController.text,
+        'note': _noteController.text,
+        'date': DateTime.now().toString(),
+      };
+      _savePassword(passwordData);
+      _loginController.clear();
       _passwordController.clear();
       _noteController.clear();
-      _savePasswords();
     }
   }
 
-  void _removePassword(int index) {
+  void _removePasswordDialog(String id) {
     showDialog(
       context: context,
       builder: (context) {
@@ -71,10 +125,7 @@ class _PasswordManagerScreenState extends State<PasswordManagerScreen> {
             ),
             TextButton(
               onPressed: () {
-                setState(() {
-                  _passwords.removeAt(index);
-                });
-                _savePasswords();
+                _removePassword(id);
                 Navigator.of(context).pop();
               },
               child: Text('Excluir'),
@@ -85,64 +136,44 @@ class _PasswordManagerScreenState extends State<PasswordManagerScreen> {
     );
   }
 
-  void _editPassword(int index) {
-    _siteController.text = _passwords[index]['site']!;
-    _passwordController.text = _passwords[index]['password']!;
-    _noteController.text = _passwords[index]['note']!;
-
-    bool _isEditingPasswordVisible = false;
+  void _editPasswordDialog(String id, Map<String, dynamic> passwordData) {
+    _loginController.text = passwordData['login'];
+    _passwordController.text = passwordData['password'];
+    _noteController.text = passwordData['note'];
 
     showDialog(
       context: context,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return AlertDialog(
-              title: Text('Editar Senha'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildTextField(_siteController, 'Site'),
-                  _buildPasswordField(
-                    isEditing: true,
-                    isPasswordVisible: _isEditingPasswordVisible,
-                    toggleVisibility: () {
-                      setState(() {
-                        _isEditingPasswordVisible = !_isEditingPasswordVisible;
-                      });
-                    },
-                  ),
-                  _buildTextField(_noteController, 'Nota', maxLines: 3),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('Cancelar'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _passwords[index] = {
-                        'site': _siteController.text,
-                        'password': _passwordController.text,
-                        'note': _noteController.text,
-                        'date': DateTime.now().toString(),
-                      };
-                    });
-                    _siteController.clear();
-                    _passwordController.clear();
-                    _noteController.clear();
-                    _savePasswords();
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('Salvar'),
-                ),
-              ],
-            );
-          },
+        return AlertDialog(
+          title: Text('Editar Senha'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildTextField(_loginController, 'Login'),
+              _buildPasswordField(),
+              _buildTextField(_noteController, 'Nota', maxLines: 3),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () {
+                _editPassword(id, {
+                  'login': _loginController.text,
+                  'password': _passwordController.text,
+                  'note': _noteController.text,
+                  'date': DateTime.now().toString(),
+                });
+                Navigator.of(context).pop();
+              },
+              child: Text('Salvar'),
+            ),
+          ],
         );
       },
     );
@@ -166,13 +197,7 @@ class _PasswordManagerScreenState extends State<PasswordManagerScreen> {
         maxLines: maxLines,
       ),
     );
-  }
-
-  Widget _buildPasswordField({
-    bool isEditing = false,
-    required bool isPasswordVisible,
-    required VoidCallback toggleVisibility,
-  }) {
+  }Widget _buildPasswordField() {
     return Container(
       margin: EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
@@ -188,45 +213,16 @@ class _PasswordManagerScreenState extends State<PasswordManagerScreen> {
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           suffixIcon: IconButton(
             icon: Icon(
-              isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+              _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
             ),
-            onPressed: toggleVisibility,
+            onPressed: () {
+              setState(() {
+                _isPasswordVisible = !_isPasswordVisible;
+              });
+            },
           ),
         ),
-        obscureText: !isPasswordVisible,
-      ),
-    );
-  }
-
-  Widget _buildPasswordCard(Map<String, String> passwordData, int index) {
-    return Card(
-      margin: EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: ListTile(
-        title: Text('Login: ${passwordData['site']}'),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Senha: ${passwordData['password']}'),
-            Text('Nota: ${passwordData['note']}'),
-            Text('Criado em: ${passwordData['date']}'),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: Icon(Icons.edit),
-              onPressed: () => _editPassword(index),
-            ),
-            IconButton(
-              icon: Icon(Icons.delete),
-              onPressed: () => _removePassword(index),
-            ),
-          ],
-        ),
+        obscureText: !_isPasswordVisible,
       ),
     );
   }
@@ -236,39 +232,81 @@ class _PasswordManagerScreenState extends State<PasswordManagerScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Gerenciador de Senhas'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: () {
+              _auth.signOut();
+            },
+          ),
+        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            _buildTextField(_siteController, 'Login'),
-            _buildPasswordField(
-              isPasswordVisible: _isPasswordVisible,
-              toggleVisibility: () {
-                setState(() {
-                  _isPasswordVisible = !_isPasswordVisible;
-                });
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              itemCount: _passwords.length,
+              itemBuilder: (context, index) {
+                final passwordData = _passwords[index];
+                return Card(
+                  margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  child: ListTile(
+                    title: Text(passwordData['login']),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Senha: ${passwordData['password']}'),
+                        Text('Nota: ${passwordData['note']}'),
+                      ],
+                    ),
+                    trailing: PopupMenuButton<String>(
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          _editPasswordDialog(passwordData['id'], passwordData);
+                        } else if (value == 'delete') {
+                          _removePasswordDialog(passwordData['id']);
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: Text('Editar'),
+                        ),
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Text('Excluir'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
               },
             ),
-            _buildTextField(_noteController, 'Nota', maxLines: 3),
-            SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _addPassword,
-              child: Text('Adicionar Senha'),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildTextField(_loginController, 'Login'),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: _buildPasswordField(),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: _buildTextField(_noteController, 'Nota'),
+                ),
+                SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(Icons.add),
+                  onPressed: _addPassword,
+                ),
+              ],
             ),
-            SizedBox(height: 20),
-            Expanded(
-              child: _passwords.isEmpty
-                  ? Center(child: Text('Nenhuma senha salva'))
-                  : ListView.builder(
-                itemCount: _passwords.length,
-                itemBuilder: (context, index) {
-                  return _buildPasswordCard(_passwords[index], index);
-                },
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

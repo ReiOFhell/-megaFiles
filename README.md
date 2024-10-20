@@ -1,16 +1,26 @@
-# gomega
+## Ômega
 
-Se deu errado começe do zero!
+If things didn’t go as planned, don’t worry! Sometimes the best solution is to start fresh.
 
-## Getting Started
+Fast and Easy Download!
 
-This project is a starting point for a Flutter application.
+Want to access Ômega? It’s simple! Download the Ômega files directly from MediaFire. Just click the link, and you’ll be one step closer to enjoying all the features we’ve prepared for you!
 
-A few resources to get you started if this is your first Flutter project:
+https://www.mediafire.com/file/m9q6gncdtg0hvrh/%C3%B4mega.apk/file
+## 
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+
+
+
+
+## Ômega
+
+Se as coisas não saíram como planejado, não se preocupe! Às vezes, a melhor solução é começar do zero.
+
+Download rápido e fácil!
+
+Quer ter acesso ao Ômega? É simples! Baixe os arquivos do Ômega diretamente pelo MediaFire. Clique no link e pronto: você estará a um passo de aproveitar todas as funcionalidades que preparamos para você!
+
+
+https://www.mediafire.com/file/m9q6gncdtg0hvrh/%C3%B4mega.apk/file
